@@ -1,16 +1,97 @@
 <!doctype html>
-<html lang="en">
+<html lang="nl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#10131c" />
-    <title>Lichtpuntje — Three.js starter</title>
+    <meta name="theme-color" content="#e3ecf2" />
+    <title>Lege Three.js-scène</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
-    <main>
-      <canvas id="scene" aria-label="A softly lit rotating 3D cube"></canvas>
-      <p class="label">Three.js starter</p>
-    </main>
-    <script type="module" src="/src/main.js"></script>
+    <canvas id="scene" aria-label="Lege Three.js-scène"></canvas>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+      const scene = new THREE.Scene();
+      const backgroundCanvas = document.createElement('canvas');
+      backgroundCanvas.width = 1;
+      backgroundCanvas.height = 256;
+      const backgroundContext = backgroundCanvas.getContext('2d');
+      const backgroundGradient = backgroundContext.createLinearGradient(0, 0, 0, 256);
+      backgroundGradient.addColorStop(0, '#A9CFE0');
+      backgroundGradient.addColorStop(1, '#FAF3E4');
+      backgroundContext.fillStyle = backgroundGradient;
+      backgroundContext.fillRect(0, 0, 1, 256);
+
+      const backgroundTexture = new THREE.CanvasTexture(backgroundCanvas);
+      backgroundTexture.colorSpace = THREE.SRGBColorSpace;
+      scene.background = backgroundTexture;
+      scene.fog = new THREE.Fog('#FAF3E4', 10, 40);
+
+      const ambientLight = new THREE.AmbientLight('#fff0d6', 0.4);
+      scene.add(ambientLight);
+
+      const warmDirectionalLight = new THREE.DirectionalLight('#fff0d6', 1.2);
+      warmDirectionalLight.position.set(-3, 5, 5);
+      scene.add(warmDirectionalLight);
+
+      // TIJDELIJK: testobject
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 1.5, 1.5),
+        new THREE.MeshStandardMaterial({ color: '#f4a261', roughness: 0.4 }),
+      );
+      cube.position.z = -5;
+      scene.add(cube);
+
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000,
+      );
+      const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector('#scene'),
+      });
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.target.copy(cube.position);
+      controls.update();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.render(scene, camera);
+
+      function resizeScene() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', resizeScene);
+
+      renderer.setAnimationLoop(() => {
+        controls.update();
+        cube.rotation.x += 0.003;
+        cube.rotation.y += 0.005;
+        renderer.render(scene, camera);
+      });
+    </script>
   </body>
 </html>
